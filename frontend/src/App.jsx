@@ -8,6 +8,9 @@ import ScrollToTop from "./components/ScrollToTop";
 import VerifyEmail from "./components/VerifyEmail";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CookieConsent from "./components/CookieConsent";
+import TicketList from "./components/TicketList";
+import { CreateTicket } from "./components/CreateTicket.jsx";
+import TicketThread from "./components/TicketThread.jsx";
 
 // Import Pages
 import Home from "./pages/Home";
@@ -61,11 +64,26 @@ function App() {
             <Route path="/verify-email" element={<VerifyEmail />} />
             {/* The "Smart" Route */}
             <Route path="/profile" element={<ProfileRedirect />} />
+            {/* SHARED SUPPORT ROUTES (Accessible by both Artisans and Customers) */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={["artisan", "customer", "admin"]}
+                />
+              }
+            >
+              <Route path="/support/tickets" element={<TicketList />} />
+              <Route path="/support/new" element={<CreateTicket />} />
+
+              {/* This is the thread view for individual tickets */}
+              <Route path="/support/tickets/:id" element={<TicketThread />} />
+            </Route>
             {/* The Specific Dashboards */}
             {/* Artisan Only Routes */}
             <Route element={<ProtectedRoute allowedRoles={["artisan"]} />}>
               <Route path="/artisan-dashboard" element={<ArtisanDashboard />} />
             </Route>
+            {/* Admin Only Routes */}
             <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
               <Route path="/admin-dashboard" element={<AdminDashboard />} />
             </Route>

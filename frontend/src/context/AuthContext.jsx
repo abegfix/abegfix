@@ -13,30 +13,26 @@ export const AuthProvider = ({ children }) => {
 
   // Run this once when the app loads to check if they are already logged in
 
+  // AuthContext.jsx
   useEffect(() => {
     const verifyLoggedInUser = async () => {
       if (!token) {
         setLoading(false);
-
         return;
       }
 
       try {
-        // Optional: Hit a /me route on your backend to validate the token
+        // Hit the backend to get fresh data including roles
+        const res = await API.get("/auth/me");
 
-        // and get fresh user data (Name, Role, etc.)
+        // Update local state with the full user object (contains role)
+        setUser(res.data);
 
-        // const res = await API.get("/auth/me");
-
-        // setUser(res.data.user);
-
-        // For now, if we have a token and role in storage, we trust it locally
-
-        setUser({ role: localStorage.getItem("user_role") });
+        // Sync local storage just in case it was missing
+        localStorage.setItem("user_role", res.data.role);
       } catch (error) {
         console.error("Token invalid or expired");
-
-        logout(); // Kick them out if token is dead
+        logout();
       } finally {
         setLoading(false);
       }
@@ -44,7 +40,6 @@ export const AuthProvider = ({ children }) => {
 
     verifyLoggedInUser();
   }, [token]);
-
   // The function to call when they Verify OTP or Login
 
   const login = (newToken, userData) => {

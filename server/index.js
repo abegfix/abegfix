@@ -11,6 +11,7 @@ import paymentRoutes from "./routes/payments.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import webhookRoutes from "./routes/webhook.js";
 import adminRoutes from "./routes/admin.js";
+import ticketRoutes from "./routes/tickets.js";
 
 // Cron Jobs
 import { initCronJobs } from "./utils/cronJobs.js";
@@ -58,6 +59,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/webhooks", webhookRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/tickets", ticketRoutes);
 
 // Health check (usually left without a limiter so monitoring tools don't get blocked)
 app.get("/health", (req, res) => {

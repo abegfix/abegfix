@@ -25,6 +25,11 @@ const Footer = () => {
             <h4 className="text-white font-bold mb-4">Support</h4>
             <ul className="space-y-2">
               <li>
+                <Link to="/support/tickets" className="hover:text-blue-400">
+                  Tickets
+                </Link>
+              </li>
+              <li>
                 <Link to="/faq" className="hover:text-blue-400">
                   FAQs
                 </Link>

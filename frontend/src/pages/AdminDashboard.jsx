@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom"; // Added for ticket navigation
 import API from "../api/axios";
 import toast from "react-hot-toast";
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [logs, setLogs] = useState([]);
+  const [tickets, setTickets] = useState([]); // State for tickets
   const [activeTab, setActiveTab] = useState("users");
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [ticketFilter, setTicketFilter] = useState("all"); // Filter for tickets
 
   useEffect(() => {
     fetchData();
@@ -33,57 +36,15 @@ const AdminDashboard = () => {
     );
   });
 
-  // --- CSV EXPORT LOGIC ---
-  const downloadCSV = () => {
-    const dataToExport = activeTab === "users" ? filteredUsers : filteredLogs;
-    if (dataToExport.length === 0) return toast.error("No data to export");
-
-    // Define headers based on tab
-    const headers =
-      activeTab === "users"
-        ? [
-            "First Name",
-            "Last Name",
-            "Email",
-            "Role",
-            "Verified",
-            "Pro Tier",
-            "Banned",
-          ]
-        : ["Admin Name", "Action", "Target User", "Date/Time"];
-
-    // Format rows
-    const rows = dataToExport.map((item) => {
-      if (activeTab === "users") {
-        return [
-          item.firstName,
-          item.lastName,
-          item.email,
-          item.role,
-          item.artisanProfile?.isVerified ? "Yes" : "No",
-          item.artisanProfile?.subscriptionTier === "pro" ? "Yes" : "No",
-          item.isBanned ? "Yes" : "No",
-        ];
-      }
-      return [
-        item.adminName,
-        item.action,
-        item.targetUserEmail,
-        new Date(item.createdAt).toLocaleString(),
-      ];
-    });
-
-    const csvContent = [headers, ...rows].map((e) => e.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `${activeTab.replace(" ", "_")}_export.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success("CSV Exported!");
-  };
+  // Ticket filtering logic
+  const filteredTickets = tickets.filter((t) => {
+    const matchesSearch =
+      t.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.user.firstName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      ticketFilter === "all" ? true : t.status === ticketFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const fetchData = async () => {
     setLoading(true);
@@ -91,6 +52,9 @@ const AdminDashboard = () => {
       if (activeTab === "users") {
         const res = await API.get("/admin/users");
         setUsers(res.data);
+      } else if (activeTab === "support tickets") {
+        const res = await API.get("/tickets/admin/all");
+        setTickets(res.data);
       } else {
         const res = await API.get("/admin/logs");
         setLogs(res.data);
@@ -112,7 +76,22 @@ const AdminDashboard = () => {
     }
   };
 
-  if (loading && users.length === 0)
+  const handleResolveTicket = async (ticketId) => {
+    if (
+      !window.confirm("Are you sure you want to mark this ticket as resolved?")
+    )
+      return;
+
+    try {
+      await API.put(`/tickets/${ticketId}/resolve`);
+      toast.success("Ticket resolved and logged.");
+      fetchData(); // Refresh the list
+    } catch (err) {
+      toast.error("Failed to resolve ticket.");
+    }
+  };
+
+  if (loading && users.length === 0 && tickets.length === 0)
     return <div className="p-20 text-center">Loading Admin Panel...</div>;
 
   return (
@@ -121,9 +100,9 @@ const AdminDashboard = () => {
         Platform Administration
       </h1>
 
-      {/* Tabs */}
+      {/* Tabs - Added Support Tickets */}
       <div className="flex border-b border-gray-200 mb-8">
-        {["users", "audit logs"].map((tab) => (
+        {["users", "support tickets", "audit logs"].map((tab) => (
           <button
             key={tab}
             onClick={() => {
@@ -146,55 +125,90 @@ const AdminDashboard = () => {
         <div className="relative max-w-md w-full">
           <input
             type="text"
-            placeholder={
-              activeTab === "users"
-                ? "Search email or name..."
-                : "Search admin, action, or date..."
-            }
+            placeholder="Search..."
             className="w-full pl-4 pr-12 py-3 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all text-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <div className="absolute right-4 top-3 text-gray-400">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-          </div>
         </div>
 
-        <button
-          onClick={downloadCSV}
-          className="flex items-center justify-center gap-2 bg-gray-900 text-white px-5 py-3 rounded-xl text-xs font-bold hover:bg-black transition-all shadow-lg active:scale-95"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-            />
-          </svg>
-          DOWNLOAD CSV
-        </button>
+        {activeTab === "support tickets" && (
+          <div className="flex gap-2">
+            {["all", "open", "pending", "resolved"].map((s) => (
+              <button
+                key={s}
+                onClick={() => setTicketFilter(s)}
+                className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition ${ticketFilter === s ? "bg-red-600 text-white" : "bg-gray-100 text-gray-500"}`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
+      {/* TICKETS TAB */}
+      {activeTab === "support tickets" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filteredTickets.map((ticket) => (
+            <div
+              key={ticket._id}
+              className="bg-white p-5 rounded-2xl border border-gray-200 hover:shadow-md transition-shadow"
+            >
+              <div className="flex justify-between items-start mb-3">
+                <span
+                  className={`text-[10px] font-black px-2 py-1 rounded uppercase ${ticket.priority === "high" ? "bg-red-100 text-red-600" : "bg-gray-100"}`}
+                >
+                  {ticket.priority} Priority
+                </span>
+                <span
+                  className={`text-[10px] font-bold px-2 py-1 rounded uppercase ${
+                    ticket.status === "open"
+                      ? "bg-green-100 text-green-700"
+                      : ticket.status === "resolved"
+                        ? "bg-gray-100 text-gray-500"
+                        : "bg-blue-100 text-blue-700"
+                  }`}
+                >
+                  {ticket.status}
+                </span>
+              </div>
+
+              <h3 className="font-bold text-gray-900 mb-1">{ticket.subject}</h3>
+              <p className="text-xs text-gray-500 mb-4 line-clamp-2">
+                {ticket.description}
+              </p>
+
+              <div className="flex justify-between items-center pt-4 border-t border-gray-50">
+                <div className="flex gap-2">
+                  <Link
+                    to={`/support/tickets/${ticket._id}`}
+                    className="bg-gray-900 text-white text-[10px] px-3 py-2 rounded-lg font-bold hover:bg-black transition"
+                  >
+                    VIEW THREAD
+                  </Link>
+                  {/* RESOLVE BUTTON */}
+                  {ticket.status !== "resolved" && (
+                    <button
+                      onClick={() => handleResolveTicket(ticket._id)}
+                      className="border border-green-600 text-green-600 text-[10px] px-3 py-2 rounded-lg font-bold hover:bg-green-50 transition"
+                    >
+                      MARK RESOLVED
+                    </button>
+                  )}
+                </div>
+
+                <div className="text-right">
+                  <p className="text-[10px] text-gray-400">User</p>
+                  <p className="text-[11px] font-bold text-gray-700">
+                    {ticket.user.firstName}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       {/* USERS TAB */}
       {activeTab === "users" && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
