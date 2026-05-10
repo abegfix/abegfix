@@ -161,17 +161,27 @@ const AdminDashboard = () => {
                 >
                   {ticket.priority} Priority
                 </span>
-                <span
-                  className={`text-[10px] font-bold px-2 py-1 rounded uppercase ${
-                    ticket.status === "open"
-                      ? "bg-green-100 text-green-700"
-                      : ticket.status === "resolved"
-                        ? "bg-gray-100 text-gray-500"
-                        : "bg-blue-100 text-blue-700"
-                  }`}
-                >
-                  {ticket.status}
-                </span>
+                {/* Replace the existing status span with this */}
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-[10px] font-bold px-2 py-1 rounded uppercase flex items-center gap-1.5 ${
+                      ticket.status === "open"
+                        ? "bg-green-100 text-green-700 ring-1 ring-green-600/20"
+                        : ticket.status === "resolved"
+                          ? "bg-gray-100 text-gray-500"
+                          : "bg-blue-100 text-blue-700"
+                    }`}
+                  >
+                    {/* The Flashing Dot for 'open' tickets */}
+                    {ticket.status === "open" && (
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                      </span>
+                    )}
+                    {ticket.status}
+                  </span>
+                </div>
               </div>
 
               <h3 className="font-bold text-gray-900 mb-1">{ticket.subject}</h3>

@@ -63,32 +63,28 @@ export const getSingleTicket = async (req, res) => {
 };
 
 // @desc    User reply back to Admin
+// @desc    User reply: Stop Slack spam, only keep In-App flow
 export const userReply = async (req, res) => {
   try {
     const { message } = req.body;
     const ticket = await Ticket.findById(req.params.id);
 
     if (!ticket) return res.status(404).json({ msg: "Ticket not found" });
-    if (ticket.status === "closed")
+    if (ticket.status === "resolved" || ticket.status === "closed")
       return res.status(400).json({ msg: "Ticket is closed" });
 
     ticket.messages.push({ sender: req.user.id, message });
+
+    // Switch status to 'open' so it catches Admin attention in the dashboard
     ticket.status = "open";
     await ticket.save();
 
-    // Only notify Slack if a non-admin (user) is replying
-    if (req.user.role !== "admin" && process.env.SLACK_WEBHOOK_URL) {
-      await axios.post(process.env.SLACK_WEBHOOK_URL, {
-        text: `💬 *User Reply:* ${req.user.firstName} sent a message regarding "${ticket.subject}"`,
-      });
-    }
-
+    // REMOVED Slack notification here to avoid noise on every reply
     res.status(200).json(ticket);
   } catch (err) {
     res.status(500).json({ msg: "Server Error" });
   }
 };
-
 // @desc    Admin: Get all tickets in system
 export const getAllTickets = async (req, res) => {
   try {
@@ -128,25 +124,6 @@ export const adminReply = async (req, res) => {
     } catch (logErr) {
       console.error("Failed to create Admin Log:", logErr.message);
       // We don't return res.status(500) here so the user still gets their email
-    }
-
-    // 4. Trigger Email Notification
-    try {
-      const htmlContent = supportReplyTemplate(
-        ticket.user.firstName,
-        ticket.subject,
-        message,
-        ticket._id,
-      );
-
-      await sendEmail(
-        ticket.user.email,
-        `Support Update: ${ticket.subject}`,
-        htmlContent,
-      );
-      console.log("Support email sent to:", ticket.user.email);
-    } catch (emailErr) {
-      console.error("Failed to send support email:", emailErr.message);
     }
 
     // 5. Final Response
