@@ -28,6 +28,8 @@ import ArtisanProfileView from "./pages/ArtisanProfileView";
 import Contact from "./pages/Contact";
 import AdminDashboard from "./pages/AdminDashboard";
 import HelpCenter from "./pages/HelpCenter";
+import ArticlePage from "./pages/ArticlePage";
+import CategoryArticles from "./components/documentation/CategoryArticles";
 
 //Inner Pages
 import About from "./pages/innerpages/About.jsx";
@@ -108,6 +110,14 @@ function App() {
             <Route path="/disclaimer" element={<Disclaimer />} />
             <Route path="/copyright-policy" element={<CopyrightPolicy />} />
             <Route path="/help-center" element={<HelpCenter />} />
+            <Route
+              path="/help-center/article/:slug"
+              element={<ArticlePage />}
+            />
+            <Route
+              path="/help-center/category/:slug"
+              element={<CategoryArticles />}
+            />
             <Route
               path="/earnings-disclaimer"
               element={<EarningsDisclaimer />}
