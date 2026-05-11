@@ -40,23 +40,13 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/how-it-works" className="hover:text-blue-400">
-                  How it Works
+                <Link to="/help-center" className="hover:text-blue-400">
+                  Help Center
                 </Link>
               </li>
               <li>
                 <Link to="/data-policy" className="hover:text-blue-400">
                   Data Policy
-                </Link>
-              </li>
-              <li>
-                <Link to="/safety" className="hover:text-blue-400">
-                  Safety
-                </Link>
-              </li>
-              <li>
-                <Link to="/guidelines" className="hover:text-blue-400">
-                  Guidelines
                 </Link>
               </li>
             </ul>

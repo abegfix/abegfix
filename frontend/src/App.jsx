@@ -27,6 +27,7 @@ import ProfileRedirect from "./pages/ProfileRedirect";
 import ArtisanProfileView from "./pages/ArtisanProfileView";
 import Contact from "./pages/Contact";
 import AdminDashboard from "./pages/AdminDashboard";
+import HelpCenter from "./pages/HelpCenter";
 
 //Inner Pages
 import About from "./pages/innerpages/About.jsx";
@@ -106,6 +107,7 @@ function App() {
             <Route path="/data-policy" element={<DataPolicy />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
             <Route path="/copyright-policy" element={<CopyrightPolicy />} />
+            <Route path="/help-center" element={<HelpCenter />} />
             <Route
               path="/earnings-disclaimer"
               element={<EarningsDisclaimer />}

@@ -1,7 +1,5 @@
 import Ticket from "../models/Ticket.js";
 import axios from "axios";
-import { sendEmail } from "../utils/sendEmail.js";
-import { supportReplyTemplate } from "../utils/emailTemplates.js";
 import AdminLog from "../models/AdminLog.js";
 // @desc    Create a new ticket & Notify Slack
 export const createTicket = async (req, res) => {
