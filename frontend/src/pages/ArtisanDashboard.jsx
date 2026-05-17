@@ -70,6 +70,7 @@ const ArtisanDashboard = () => {
       const res = await API.get(`/auth/me?t=${timestamp}`);
 
       const userData = res.data;
+
       setUser(userData);
 
       if (
@@ -238,44 +239,37 @@ const ArtisanDashboard = () => {
   // Add useCallback to your imports: import React, { useState, useEffect, useCallback } from "react";
 
   const handlePaymentSuccess = useCallback(
-    async (paystackResponse) => {
+    async (flutterResponse) => {
+      // response from Flutterwave callback
       toast.loading("Verifying payment...", { id: "payment-toast" });
 
       try {
-        const ref =
-          paystackResponse?.reference ||
-          (typeof paystackResponse === "string" ? paystackResponse : "");
+        const transaction_id = flutterResponse.transaction_id;
         const pType = modalConfig?.type;
 
         setModalConfig((prev) => ({ ...prev, isOpen: false }));
 
-        // 1. Verify with Backend
+        // 1. Verify with Backend (passing transaction_id instead of reference)
         await API.post("/payments", {
-          reference: ref,
+          transaction_id, // Key change
           type: pType,
+          firstName: user?.firstName,
+          lastName: user?.lastName,
         });
 
-        // 2. THE FIX: Wait 3 seconds to ensure the DB has propagated the changes
         toast.loading("Syncing your new status...", { id: "payment-toast" });
         await new Promise((resolve) => setTimeout(resolve, 3000));
 
-        // 3. REFRESH DATA
         await getProfile();
-
         toast.success("Upgrade Successful!", { id: "payment-toast" });
 
         if (pType === "pro") {
           confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
         }
       } catch (err) {
-        console.error("Verification Error:", err);
-        // Now, only show this if it REALLY fails after the wait
-        toast.error(
-          "Sync was slow, but your payment was successful. Please refresh.",
-          {
-            id: "payment-toast",
-          },
-        );
+        toast.error("Sync was slow, but payment was successful. Refresh.", {
+          id: "payment-toast",
+        });
       } finally {
         setLoading(false);
       }

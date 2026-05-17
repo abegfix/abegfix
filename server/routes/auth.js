@@ -414,4 +414,40 @@ router.put("/delete-portfolio-image", protect, async (req, res) => {
   }
 });
 
+router.put("/update-customer", protect, async (req, res) => {
+  // Destructure exactly what the frontend is sending in the 'profile' state
+  const { firstName, lastName, phoneNumber } = req.body;
+
+  try {
+    // Build the update object using dot notation for nested fields
+    const updateFields = {};
+
+    if (firstName !== undefined) updateFields.firstName = firstName.trim();
+    if (lastName !== undefined) updateFields.lastName = lastName.trim();
+
+    // This matches the phoneNumber field inside your customerProfile schema
+    if (phoneNumber !== undefined) {
+      updateFields["customerProfile.phoneNumber"] = phoneNumber.trim();
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      { $set: updateFields },
+      {
+        new: true,
+        runValidators: true,
+      },
+    ).select("-password");
+
+    if (!updatedUser) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    res.json(updatedUser);
+  } catch (err) {
+    console.error("Update Profile Error:", err.message);
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
 export default router;

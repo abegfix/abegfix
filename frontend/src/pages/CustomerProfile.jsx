@@ -43,7 +43,7 @@ const CustomerProfile = () => {
         email: data.email, // <--- ADD THIS
         firstName: data.firstName || "",
         lastName: data.lastName || "",
-        phoneNumber: data.phoneNumber || "",
+        phoneNumber: data?.customerProfile?.phoneNumber || "",
         profilePic: data.profilePic || "",
         premiumStatus: data.customerProfile?.premiumStatus || "free",
         premiumExpiresAt: data.customerProfile?.premiumExpiresAt || null,
@@ -71,7 +71,16 @@ const CustomerProfile = () => {
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      await API.put("/auth/update-customer", profile);
+      const { data } = await API.put("/auth/update-customer", profile);
+
+      // Update local state with the fresh data from the server
+      setProfile({
+        ...profile,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phoneNumber: data.customerProfile?.phoneNumber || "",
+      });
+
       toast.success("Profile updated!");
     } catch (err) {
       toast.error(err.response?.data?.msg || "Update failed");
@@ -90,23 +99,24 @@ const CustomerProfile = () => {
     }
   };
 
-  const handleUpgradeSuccess = async (paystackResponse) => {
+  const handleUpgradeSuccess = async (flutterResponse) => {
     const toastId = toast.loading("Verifying payment...");
 
     try {
-      // 1. Get the reference from Paystack
-      const reference = paystackResponse?.reference || paystackResponse;
+      // 1. Flutterwave returns transaction_id in its success callback
+      const transaction_id = flutterResponse.transaction_id;
 
-      // 2. Close the modal early for a better UX
+      // 2. Close the modal early for better UX
       setIsUpgradeModalOpen(false);
 
       // 3. Verify with your backend
+      // Note: We send 'transaction_id' now, matching the new backend logic
       await API.post("/payments", {
-        reference,
+        transaction_id,
         type: "premium",
       });
 
-      // 4. THE SYNC DELAY: Wait 3 seconds for DB propagation
+      // 4. SYNC DELAY: Keep this as it ensures the MongoDB change reflects in your next fetch
       toast.loading("Syncing your Premium status...", { id: toastId });
       await new Promise((resolve) => setTimeout(resolve, 3000));
 
@@ -178,49 +188,12 @@ const CustomerProfile = () => {
                     onClick={() => setIsUpgradeModalOpen(true)}
                     className="bg-gray-900 text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-transform"
                   >
-                    Upgrade to Premium — ₦1000
+                    Upgrade to Premium — ₦500
                   </button>
                 </div>
               )}
             </div>
             <form onSubmit={handleUpdate} className="space-y-6">
-              <div className="flex flex-col items-center mb-6">
-                <div className="w-24 h-24 rounded-full bg-gray-100 overflow-hidden border mb-4">
-                  <img
-                    src={"https://avatar.iran.liara.run/public/33"}
-                    alt="Avatar"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                {/* <button
-                type="button"
-                className="text-sm text-blue-600 font-bold hover:underline"
-              >
-                Change Photo
-              </button>*/}
-              </div>
-
-              {/* <div className="flex flex-col items-center mb-8">
-                {profile.premiumStatus === "premium" ? (
-                  <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest shadow-md flex items-center gap-2">
-                    <span>★ PREMIUM ACTIVE</span>
-                    {profile.premiumExpiresAt && (
-                      <span className="opacity-80 font-medium normal-case tracking-normal">
-                        (Valid until{" "}
-                        {new Date(
-                          profile.premiumExpiresAt,
-                        ).toLocaleDateString()}
-                        )
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  <div className="bg-gray-100 text-gray-500 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest border">
-                    Free Account (3 Reveals / Day)
-                  </div>
-                )}
-              </div>*/}
-
               <div className="grid grid-cols-2 gap-4">
                 <input
                   type="text"
@@ -327,6 +300,7 @@ const CustomerProfile = () => {
         type="premium"
         userEmail={profile.email}
         userId={profile.id}
+        userPhone={profile.phoneNumber}
         userFirstName={profile.firstName} // <--- ADD THIS
         userLastName={profile.lastName} // <--- ADD THIS
         onSuccess={handleUpgradeSuccess}

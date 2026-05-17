@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { usePaystackPayment } from "react-paystack";
+import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
 import API from "../api/axios";
 import toast from "react-hot-toast";
 
@@ -10,6 +10,7 @@ const UpgradeModal = ({
   userEmail,
   onSuccess,
   userId,
+  userPhone,
   userFirstName,
   userLastName,
 }) => {
@@ -27,50 +28,53 @@ const UpgradeModal = ({
     pro: {
       title: "Upgrade to Pro",
       price: 1500, // ₦1,500
-      displayPrice: "₦1,500",
+      displayPrice: "₦1,500/month",
       color: "bg-blue-600",
-      benefits: ["15 Portfolio Slots", "Priority Search Ranking"],
+      benefits: [
+        "15 Portfolio Slots",
+        "Priority Search Ranking",
+        "Priority Service",
+      ],
     },
     verified: {
       title: "Get Verified",
-      price: 1000, // ₦1,000
-      displayPrice: "₦1,000",
+      price: 1500, // ₦1,500
+      displayPrice: "₦1,500 one time",
       color: "bg-green-600",
-      benefits: [
-        "BVN Identity Badge",
-        "Higher Trust Score",
-        "Protection Policy",
-      ],
+      benefits: ["BVN Identity Badge", "Higher Trust Score"],
     },
     premium: {
       title: "Go Premium",
-      price: 1000, // ₦500
-      displayPrice: "₦1000",
+      price: 500, // ₦500
+      displayPrice: "₦500/month",
       color: "bg-gray-900",
-      benefits: [
-        "Unlimited Contact Reveals",
-        "Save Unlimited Favorites",
-        "Ad-Free Experience",
-      ],
+      benefits: ["Unlimited Contact Reveals"],
     },
   };
 
   const active = content[type] || content.pro;
 
-  const paymentReference = useMemo(() => `REF_${Date.now()}`, [isOpen]);
-
-  const config = useMemo(
-    () => ({
-      reference: paymentReference,
+  // Flutterwave Config
+  const config = {
+    public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY || "",
+    tx_ref: `REF_${Date.now()}`,
+    amount: active.price, // Flutterwave takes Naira directly (not kobo)
+    currency: "NGN",
+    payment_options: "card,banktransfer,ussd",
+    customer: {
       email: userEmail,
-      amount: active.price * 100, // Paystack expects Kobo
-      publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "",
-      metadata: { userId, upgradeType: type },
-    }),
-    [paymentReference, userEmail, userId, type, active.price],
-  );
+      phone_number: userPhone || "",
+      name: `${userFirstName} ${userLastName}`,
+    },
+    meta: { userId, upgradeType: type },
+    customizations: {
+      title: "Abeg Fix Upgrade",
+      description: `Payment for ${active.title}`,
+      logo: "https://res.cloudinary.com/diwz3uvgw/image/upload/v1774534460/RE79T3F_a8s3kh.png",
+    },
+  };
 
-  const initializePayment = usePaystackPayment(config);
+  const handleFlutterPayment = useFlutterwave(config);
 
   if (!isOpen) return null;
 
@@ -154,21 +158,18 @@ const UpgradeModal = ({
 
           {/* STEP 3: PAY */}
           {step === "pay" && (
-            <div className="text-center">
-              <div className="mb-6 p-4 bg-blue-50 rounded-2xl text-blue-800 text-xs font-black uppercase italic">
-                {type === "premium"
-                  ? "Ready for Unlimited Access"
-                  : "Ready for Priority Rankings?"}
-              </div>
+            <div className="text-center p-6">
               <button
                 onClick={() => {
-                  initializePayment({
-                    onSuccess: (res) => {
-                      // PASS THE FULL RESPONSE BACK FIRST
-                      // res contains { reference, status, trans, etc. }
-                      onSuccess(res, bvn);
-                      // The parent handlePaymentSuccess will now take over
-                      // and close the modal when it's ready.
+                  handleFlutterPayment({
+                    callback: (response) => {
+                      console.log(response);
+                      if (response.status === "completed") {
+                        onSuccess(response, bvn); // Pass response to parent
+                      } else {
+                        toast.error("Payment was not successful");
+                      }
+                      closePaymentModal();
                     },
                     onClose: () => onClose(),
                   });

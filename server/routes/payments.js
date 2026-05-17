@@ -136,36 +136,46 @@ router.post(
 // --- MAIN PAYMENT VERIFICATION ROUTE ---
 // Removed authorize("artisan") so Customers can upgrade to Premium too
 router.post("/", protect, async (req, res) => {
-  // Extracted firstName and lastName here to prevent ReferenceErrors in the "verified" block
-  const { reference, type, firstName, lastName } = req.body;
+  // 1. Destructure everything we need
+  const { transaction_id, type, firstName, lastName } = req.body;
+
+  if (!transaction_id) {
+    return res.status(400).json({ msg: "No transaction ID provided" });
+  }
 
   try {
-    // 1. Verify Payment with Paystack
+    // 2. Flutterwave Verification
     const response = await axios.get(
-      `https://api.paystack.co/transaction/verify/${reference}`,
+      `https://api.flutterwave.com/v3/transactions/${transaction_id}/verify`,
       {
         headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          Authorization: `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`,
         },
       },
     );
 
-    if (response.data.data.status !== "success") {
+    const paymentData = response.data.data;
+
+    if (paymentData.status !== "successful") {
       return res.status(400).json({ msg: "Payment verification failed" });
     }
 
     let update = {};
     const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + 30); // 30 days from now for both Pro and Premium
+    expiryDate.setDate(expiryDate.getDate() + 30);
 
-    // 2. Handle Logic based on Subscription Type
+    // 3. THE LOGIC BRANCHES
+
+    // --- ARTISAN PRO ---
     if (type === "pro") {
       update = {
         "artisanProfile.subscriptionTier": "pro",
         "artisanProfile.proExpiresAt": expiryDate,
       };
-    } else if (type === "verified") {
-      // Identity verification fallback check
+    }
+
+    // --- IDENTITY VERIFICATION (The missing block) ---
+    else if (type === "verified") {
       if (firstName && lastName) {
         const isMatch =
           req.user.firstName.toLowerCase().trim() ===
@@ -174,41 +184,41 @@ router.post("/", protect, async (req, res) => {
             lastName.toLowerCase().trim();
 
         if (!isMatch) {
-          return res
-            .status(400)
-            .json({ msg: "Identity verification failed. Name mismatch." });
+          return res.status(400).json({
+            msg: "Identity verification failed. Name mismatch with profile.",
+          });
         }
       }
-
       update = { "artisanProfile.isVerified": true };
-    } else if (type === "premium") {
-      // NEW: Customer Premium Logic
+    }
+
+    // --- CUSTOMER PREMIUM ---
+    else if (type === "premium") {
       if (req.user.role !== "customer") {
         return res
           .status(403)
           .json({ msg: "Only customers can upgrade to premium." });
       }
-
       update = {
         "customerProfile.premiumStatus": "premium",
         "customerProfile.premiumExpiresAt": expiryDate,
       };
     }
 
-    // 3. Update Database once with the 'update' object built above
+    // 4. Execute Update
     const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
       { $set: update },
       { new: true },
-    );
+    ).select("-password");
 
     return res.json({
       msg: `Successfully upgraded to ${type}!`,
       user: updatedUser,
     });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server Error");
+    console.error("Verification Error:", err.response?.data || err.message);
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 

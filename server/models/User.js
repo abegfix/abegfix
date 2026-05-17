@@ -34,6 +34,7 @@ const UserSchema = new Schema(
     // --- ADDED: Customer Specific Fields ---
     customerProfile: {
       lga: String,
+      phoneNumber: { type: String, required: false },
       location: {
         type: {
           type: String,

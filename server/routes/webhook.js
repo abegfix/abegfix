@@ -43,4 +43,93 @@ router.post("/paystack", async (req, res) => {
   }
 });
 
+router.post("/flutterwave", async (req, res) => {
+  try {
+    // 1. Verify the signature
+    const secretHash = process.env.FLUTTERWAVE_WEBHOOK_HASH; // Set this in Flutterwave Dashboard
+    const signature = req.headers["verif-hash"];
+
+    if (!signature || signature !== secretHash) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    const event = req.body;
+
+    // 2. Handle 'charge.completed'
+    if (event.status === "successful") {
+      const { userId, upgradeType } = event.meta; // Passed in the metadata
+
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 30);
+
+      let update = {};
+      if (upgradeType === "pro") {
+        update = {
+          "artisanProfile.subscriptionTier": "pro",
+          "artisanProfile.proExpiresAt": expiryDate,
+        };
+      } else if (upgradeType === "premium") {
+        update = {
+          "customerProfile.premiumStatus": "premium",
+          "customerProfile.premiumExpiresAt": expiryDate,
+        };
+      } else if (upgradeType === "verified") {
+        update = { "artisanProfile.isVerified": true };
+      }
+
+      await User.findByIdAndUpdate(userId, { $set: update });
+      console.log(`Webhook: Upgraded User ${userId} to ${upgradeType}`);
+    }
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error("Flutterwave Webhook Error:", err.message);
+    res.sendStatus(500);
+  }
+});
+router.post("/flutterwave", async (req, res) => {
+  try {
+    // 1. Verify the signature
+    const secretHash = process.env.FLUTTERWAVE_WEBHOOK_HASH; // Set this in Flutterwave Dashboard
+    const signature = req.headers["verif-hash"];
+
+    if (!signature || signature !== secretHash) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    const event = req.body;
+
+    // 2. Handle 'charge.completed'
+    if (event.status === "successful") {
+      const { userId, upgradeType } = event.meta; // Passed in the metadata
+
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 30);
+
+      let update = {};
+      if (upgradeType === "pro") {
+        update = {
+          "artisanProfile.subscriptionTier": "pro",
+          "artisanProfile.proExpiresAt": expiryDate,
+        };
+      } else if (upgradeType === "premium") {
+        update = {
+          "customerProfile.premiumStatus": "premium",
+          "customerProfile.premiumExpiresAt": expiryDate,
+        };
+      } else if (upgradeType === "verified") {
+        update = { "artisanProfile.isVerified": true };
+      }
+
+      await User.findByIdAndUpdate(userId, { $set: update });
+      console.log(`Webhook: Upgraded User ${userId} to ${upgradeType}`);
+    }
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error("Flutterwave Webhook Error:", err.message);
+    res.sendStatus(500);
+  }
+});
+
 export default router;

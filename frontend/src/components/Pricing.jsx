@@ -16,7 +16,7 @@ const tiers = [
   },
   {
     name: "Verified",
-    price: "₦1,000", // Example one-time cost
+    price: "₦1,500", // Example one-time cost
     period: "One-time fee",
     description: "Build ultimate trust with clients.",
     icon: <ShieldCheck className="text-green-600" />,
@@ -63,8 +63,8 @@ export const ArtisanTiers = () => {
         </p>
       </div>
 
-{/* CHANGE THIS LINE */}
-<div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+      {/* CHANGE THIS LINE */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
         {tiers.map((tier, i) => (
           <motion.div
             key={i}
