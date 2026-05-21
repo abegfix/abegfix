@@ -16,7 +16,7 @@ const customerTiers = [
       "Standard search filters",
       "Store Favourite Artisans",
     ],
-    notIncluded: ["Unlimited Reveals", "Save Favorites", "Priority Support"],
+    notIncluded: ["Unlimited Reveals", "Priority Support"],
     cta: "Start Browsing",
     style: "bg-white border-gray-200",
   },
@@ -53,8 +53,8 @@ export const CustomerTiers = () => {
         </p>
       </div>
 
-{/* CHANGE THIS LINE */}
-<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {/* CHANGE THIS LINE */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {customerTiers.map((tier, i) => (
           <motion.div
             key={i}
