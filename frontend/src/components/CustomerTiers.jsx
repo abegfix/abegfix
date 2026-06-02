@@ -49,7 +49,7 @@ export const CustomerTiers = () => {
         </h2>
         <p className="text-gray-500 max-w-xl mx-auto font-medium">
           Stop waiting. Get instant access to the best hands in Lagos. Upgrade
-          to Premium and never lose a good artisan's contact again.
+          to Premium and get unlimited contact reveals.
         </p>
       </div>
 
