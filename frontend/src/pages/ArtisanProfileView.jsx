@@ -196,6 +196,11 @@ const ArtisanProfileView = () => {
 
   const profile = artisan.artisanProfile || {};
 
+  const portfolioImages =
+    profile.subscriptionTier === "pro"
+      ? profile.portfolio || []
+      : (profile.portfolio || []).slice(0, 3);
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-12">
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
@@ -297,9 +302,9 @@ const ArtisanProfileView = () => {
                 <h3 className="text-xl font-black text-gray-900 mb-6 uppercase tracking-tighter">
                   Work Portfolio
                 </h3>
-                {profile.portfolio?.length > 0 ? (
+                {portfolioImages?.length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {profile.portfolio.map((img, idx) => (
+                    {portfolioImages.map((img, idx) => (
                       <div
                         key={idx}
                         onClick={() => setLightboxIndex(idx)}
@@ -487,7 +492,7 @@ const ArtisanProfileView = () => {
               onClick={(e) => {
                 e.stopPropagation();
                 setLightboxIndex((prev) =>
-                  prev > 0 ? prev - 1 : profile.portfolio.length - 1,
+                  prev > 0 ? prev - 1 : portfolioImages.length - 1,
                 );
               }}
               className="text-white text-6xl p-4 hover:text-gray-400 transition drop-shadow-lg"
@@ -497,7 +502,7 @@ const ArtisanProfileView = () => {
 
             {/* Main Image */}
             <img
-              src={profile.portfolio[lightboxIndex]}
+              src={portfolioImages[lightboxIndex]}
               alt="Enlarged Portfolio"
               onClick={(e) => e.stopPropagation()} // Prevent closing when clicking image
               className="max-h-[85vh] max-w-full object-contain mx-auto rounded-lg shadow-2xl"
@@ -508,7 +513,7 @@ const ArtisanProfileView = () => {
               onClick={(e) => {
                 e.stopPropagation();
                 setLightboxIndex((prev) =>
-                  prev < profile.portfolio.length - 1 ? prev + 1 : 0,
+                  prev < portfolioImages.length - 1 ? prev + 1 : 0,
                 );
               }}
               className="text-white text-6xl p-4 hover:text-gray-400 transition drop-shadow-lg"
