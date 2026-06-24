@@ -57,6 +57,8 @@ router.post(
         lastName,
         emailVerificationOTP: otp,
         otpExpires: otpExpires,
+        lastOtpSentAt: new Date(), // Track initial generation timestamp
+        otpResendCount: 0,
         customerProfile: { lga: lga },
       });
 
@@ -66,20 +68,6 @@ router.post(
 
       await user.save();
 
-      // SEND THE EMAIL
-      try {
-        await sendEmail(
-          user.email,
-          "Verify your Abeg Fix Account",
-          welcomeTemplate(user.firstName, otp, "Customer"),
-        );
-        // Do NOT send a res.json here
-      } catch (mailErr) {
-        console.error("Email failed to send:", mailErr);
-        // Just log it. The user is already saved.
-      }
-
-      // ONLY SEND ONE RESPONSE AT THE VERY END
       const token = jwt.sign(
         { id: user._id, role: user.role },
         process.env.JWT_SECRET,
@@ -123,11 +111,9 @@ router.post(
       const salt = await bcrypt.genSalt(12);
       const hashedPassword = await bcrypt.hash(password, salt);
 
-      // GENERATE 6-DIGIT OTP
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-      // Inside signup-artisan
       user = new User({
         email,
         password: hashedPassword,
@@ -136,34 +122,18 @@ router.post(
         lastName,
         emailVerificationOTP: otp,
         otpExpires: otpExpires,
+        lastOtpSentAt: new Date(), // Track initial generation timestamp
+        otpResendCount: 0,
         artisanProfile: {
           category,
           whatsapp,
           businessName: `${firstName}'s Services`,
-          // IMPORTANT: Do not define location here yet if you don't have coordinates
         },
       });
 
-      // For artisans, you'll likely update location later in their dashboard,
-      // so ensure the object isn't partially initialized now.
       user.artisanProfile.location = undefined;
-
       await user.save();
 
-      // SEND THE EMAIL
-      try {
-        await sendEmail(
-          user.email,
-          "Verify your Abeg Fix Account",
-          welcomeTemplate(user.firstName, otp, "Artisan"),
-        );
-        // Do NOT send a res.json here
-      } catch (mailErr) {
-        console.error("Email failed to send:", mailErr);
-        // Just log it. The user is already saved.
-      }
-
-      // ONLY SEND ONE RESPONSE AT THE VERY END
       const token = jwt.sign(
         { id: user._id, role: user.role },
         process.env.JWT_SECRET,
@@ -183,19 +153,14 @@ router.post(
 );
 
 // @route   POST api/auth/login
-// @desc    Authenticate user & get token
 router.post(
   "/login",
-
   [
     check("email", "Please include a valid email").isEmail(),
-
     check("password", "Password is required").exists(),
   ],
-
   async (req, res) => {
     const errors = validationResult(req);
-
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
@@ -203,45 +168,30 @@ router.post(
     const { email, password } = req.body;
 
     try {
-      // 1. Find user and EXPLICITLY include password if your model hides it by default
-
       const user = await User.findOne({ email: email.toLowerCase() }).select(
         "+password",
       );
 
       if (!user) {
         return res
-
           .status(401)
-
           .json({ msg: "Invalid credentials (User not found)" });
       }
-
-      // 2. Check if verified (Don't let unverified users log in!)
 
       if (!user.isEmailVerified) {
         return res.status(403).json({ msg: "Please verify your email first." });
       }
 
-      // 3. Compare hashed password
-
       const isMatch = await bcrypt.compare(password, user.password);
-
       if (!isMatch) {
         return res
-
           .status(401)
-
           .json({ msg: "Invalid credentials (Wrong password)" });
       }
 
-      // 4. Generate Token and Send Response
-
       const token = generateToken(user._id);
-
       res.json({
         token,
-
         user: { id: user._id, role: user.role, firstName: user.firstName },
       });
     } catch (err) {
@@ -252,17 +202,15 @@ router.post(
 
 // @route   POST api/auth/verify-email
 router.post("/verify-email", async (req, res) => {
-  const { email, otp } = req.body; // Expect email from body now
+  const { email, otp } = req.body;
 
   try {
-    // Find user by email instead of ID
     const user = await User.findOne({ email });
 
     if (!user) return res.status(404).json({ msg: "User not found" });
     if (user.isEmailVerified)
       return res.status(400).json({ msg: "Email already verified" });
 
-    // Verify OTP and Expiry
     if (user.emailVerificationOTP !== otp || user.otpExpires < Date.now()) {
       return res.status(400).json({ msg: "Invalid or expired OTP" });
     }
@@ -270,11 +218,11 @@ router.post("/verify-email", async (req, res) => {
     user.isEmailVerified = true;
     user.emailVerificationOTP = undefined;
     user.otpExpires = undefined;
+    user.otpResendCount = undefined;
+    user.lastOtpSentAt = undefined;
     await user.save();
-    // NEW: Generate a fresh token for auto-login
-    const token = generateToken(user._id); // Use your existing token generator
 
-    // NEW: Send back the token and user role so the frontend can route them
+    const token = generateToken(user._id);
     return res.json({
       msg: "Email verified successfully!",
       token: token,
@@ -291,25 +239,20 @@ router.post("/verify-email", async (req, res) => {
 });
 
 // @route   PUT api/auth/update-password
-// @desc    Update user password
 router.put("/update-password", protect, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
 
   try {
-    // 1. Get user and explicitly select the password field (since we usually hide it)
     const user = await User.findById(req.user.id);
 
-    // 2. Check current password
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       return res.status(400).json({ msg: "Incorrect current password" });
     }
 
-    // 3. Hash new password
     const salt = await bcrypt.genSalt(12);
     user.password = await bcrypt.hash(newPassword, salt);
 
-    // 4. Save
     await user.save();
     res.json({ msg: "Password updated successfully" });
   } catch (err) {
@@ -321,21 +264,17 @@ router.put("/update-password", protect, async (req, res) => {
 // @route   GET api/auth/me
 router.get("/me", protect, async (req, res) => {
   try {
-    // req.user.id comes from the 'protect' middleware
     const user = await User.findById(req.user.id).select("-password");
-
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
     }
 
-    // Check if subscription has expired
     if (
       user.role === "artisan" &&
       user.artisanProfile.subscriptionTier === "pro" &&
       user.artisanProfile.proExpiresAt &&
       new Date() > user.artisanProfile.proExpiresAt
     ) {
-      // It's expired! Downgrade them silently before sending the response
       user.artisanProfile.subscriptionTier = "free";
       user.artisanProfile.proExpiresAt = null;
       await user.save();
@@ -349,7 +288,7 @@ router.get("/me", protect, async (req, res) => {
 });
 
 // @route   POST api/auth/resend-otp
-// This can be used if they are logged in (via protect) or via email if they aren't
+// Implements: Cooldown, OTP reuse, and maximum request caps
 router.post("/resend-otp", async (req, res) => {
   const { email } = req.body;
 
@@ -359,45 +298,117 @@ router.post("/resend-otp", async (req, res) => {
     if (user.isEmailVerified)
       return res.status(400).json({ msg: "Email already verified" });
 
-    // Generate fresh OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    user.emailVerificationOTP = otp;
-    user.otpExpires = Date.now() + 10 * 60 * 1000;
+    // 1. HARD MAXIMUM CAP GUARD (Max 3 resends per activation flow)
+    if (user.otpResendCount >= 3) {
+      return res.status(429).json({
+        msg: "Maximum verification attempts reached. Please contact support if you need assistance.",
+      });
+    }
+
+    // 2. COOLDOWN GUARD (Must wait 60 seconds before triggering a new delivery)
+    const now = Date.now();
+    if (
+      user.lastOtpSentAt &&
+      now - new Date(user.lastOtpSentAt).getTime() < 60000
+    ) {
+      const remainingSeconds = Math.ceil(
+        (60000 - (now - new Date(user.lastOtpSentAt).getTime())) / 1000,
+      );
+      return res.status(429).json({
+        msg: `Please wait ${remainingSeconds} seconds before requesting another code.`,
+      });
+    }
+
+    // 3. OTP REUSE LOGIC
+    let activeOtp = user.emailVerificationOTP;
+
+    // If the old OTP expired, or somehow doesn't exist, generate a brand new one
+    if (!activeOtp || !user.otpExpires || user.otpExpires < now) {
+      activeOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      user.emailVerificationOTP = activeOtp;
+    }
+
+    // Extend or reset validation duration for 10 minutes from this update execution
+    user.otpExpires = now + 10 * 60 * 1000;
+    user.lastOtpSentAt = new Date();
+    user.otpResendCount += 1;
+
     await user.save();
 
+    // Outbound infrastructure execution
     await sendEmail(
       user.email,
-      "Your New Verification Code - Abeg Fix",
-      welcomeTemplate(user.firstName, otp, user.role),
+      "Your Verification Code - Abeg Fix",
+      welcomeTemplate(user.firstName, activeOtp, user.role),
     );
 
-    res.json({ msg: "A new verification code has been sent to your email." });
+    res.json({ msg: "Verification code sent successfully to your email." });
   } catch (err) {
+    console.error("Resend OTP Error:", err);
+    res.status(500).send("Server error");
+  }
+});
+
+// @route   POST api/auth/forgot-password
+// Implements: 30-minute operational cooldown window
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    // Security Best Practice: Don't explicitly reveal to scrapers if an email doesn't exist.
+    if (!user) {
+      return res.json({
+        msg: "If that email matches an account, a reset link has been dispatched.",
+      });
+    }
+
+    // 4. THIRTY-MINUTE COOLDOWN GUARD
+    const now = Date.now();
+    if (
+      user.lastPasswordResetSentAt &&
+      now - new Date(user.lastPasswordResetSentAt).getTime() < 30 * 60 * 1000
+    ) {
+      const remainingMinutes = Math.ceil(
+        (30 * 60 * 1000 -
+          (now - new Date(user.lastPasswordResetSentAt).getTime())) /
+          60000,
+      );
+      return res.status(429).json({
+        msg: `A recovery link was recently dispatched. Please wait ${remainingMinutes} minutes before requesting another.`,
+      });
+    }
+
+    // Track the transmission timestamp before passing handling off to controller logic
+    user.lastPasswordResetSentAt = new Date();
+    await user.save();
+
+    // Forward down execution pipeline to your pre-existing controller
+    return forgotPassword(req, res);
+  } catch (err) {
+    console.error("Forgot Password Guard Error:", err);
     res.status(500).send("Server error");
   }
 });
 
 router.put("/update-profile", protect, authorize("artisan"), updateProfile);
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password/:token", resetPassword); // Notice the :token param
+router.post("/reset-password/:token", resetPassword);
+
 // @desc    Delete image from Cloudinary and MongoDB
 router.put("/delete-portfolio-image", protect, async (req, res) => {
   const { imageUrl } = req.body;
-  const userId = req.user.id; // Assuming you have auth middleware
+  const userId = req.user.id;
 
   try {
-    // 1. Extract Public ID from the URL using Regex
-    // This finds everything between the version number (v12345/) and the file extension (.jpg)
     const regex = /\/v\d+\/(.+)\./;
     const match = imageUrl.match(regex);
     const publicId = match ? match[1] : null;
 
     if (publicId) {
-      // 2. Delete from Cloudinary
       await cloudinary.uploader.destroy(publicId);
     }
 
-    // 3. Remove from MongoDB using $pull
     const user = await User.findByIdAndUpdate(
       userId,
       { $pull: { "artisanProfile.portfolio": imageUrl } },
@@ -415,17 +426,14 @@ router.put("/delete-portfolio-image", protect, async (req, res) => {
 });
 
 router.put("/update-customer", protect, async (req, res) => {
-  // Destructure exactly what the frontend is sending in the 'profile' state
   const { firstName, lastName, phoneNumber } = req.body;
 
   try {
-    // Build the update object using dot notation for nested fields
     const updateFields = {};
 
     if (firstName !== undefined) updateFields.firstName = firstName.trim();
     if (lastName !== undefined) updateFields.lastName = lastName.trim();
 
-    // This matches the phoneNumber field inside your customerProfile schema
     if (phoneNumber !== undefined) {
       updateFields["customerProfile.phoneNumber"] = phoneNumber.trim();
     }
