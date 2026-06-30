@@ -164,7 +164,7 @@ const UpgradeModal = ({
                   handleFlutterPayment({
                     callback: (response) => {
                       console.log(response);
-                      if (response.status === "completed") {
+                      if (response.status === "successful") {
                         onSuccess(response, bvn); // Pass response to parent
                       } else {
                         toast.error("Payment was not successful");
