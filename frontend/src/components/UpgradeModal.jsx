@@ -60,7 +60,7 @@ const UpgradeModal = ({
     tx_ref: `REF_${Date.now()}`,
     amount: active.price, // Flutterwave takes Naira directly (not kobo)
     currency: "NGN",
-    payment_options: "card,banktransfer,ussd",
+    payment_options: "banktransfer",
     customer: {
       email: userEmail,
       phone_number: userPhone || "",
@@ -164,7 +164,7 @@ const UpgradeModal = ({
                   handleFlutterPayment({
                     callback: (response) => {
                       console.log(response);
-                      if (response.status === "successful") {
+                      if (response.status === "completed") {
                         onSuccess(response, bvn); // Pass response to parent
                       } else {
                         toast.error("Payment was not successful");
