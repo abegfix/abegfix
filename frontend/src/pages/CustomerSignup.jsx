@@ -201,13 +201,34 @@ const CustomerSignup = () => {
                     📍 Exact GPS Location Detected
                   </option>
                 )}
-                <option value="Ikeja">Ikeja / Mainland</option>
-                <option value="Surulere">Surulere</option>
-                <option value="Yaba">Yaba / Ebute Metta</option>
-                <option value="Eti-Osa">Lekki / Victoria Island / Ikoyi</option>
-                <option value="Alimosho">Alimosho / Egbeda</option>
+                <option value="Agege">Agege</option>
+                <option value="Ajeromi-Ifelodun">
+                  Ajeromi-Ifelodun / Ajegunle
+                </option>
+                <option value="Alimosho">Alimosho / Egbeda, Ikotun</option>
+                <option value="Amuwo-Odofin">Amuwo-Odofin / Festac Town</option>
+                <option value="Apapa">Apapa</option>
+                <option value="Badagry">Badagry</option>
+                <option value="Epe">Epe</option>
+                <option value="Eti-Osa">
+                  Eti-Osa / Lekki, Victoria Island
+                </option>
+                <option value="Ibeju-Lekki">Ibeju-Lekki / Lakowe, Eleko</option>
+                <option value="Ifako-Ijaiye">Ifako-Ijaiye / Ojokoro</option>
+                <option value="Ikeja">Ikeja / Maryland, Oregun</option>
                 <option value="Ikorodu">Ikorodu</option>
-                <option value="Other">Other</option>
+                <option value="Kosofe">Kosofe / Ketu, Mile 12</option>
+                <option value="Lagos Island">Lagos Island / Marina</option>
+                <option value="Lagos Mainland">
+                  Lagos Mainland / Yaba, Ebute Metta
+                </option>
+                <option value="Mushin">Mushin</option>
+                <option value="Ojo">Ojo / Alaba, Okokomaiko</option>
+                <option value="Oshodi-Isolo">
+                  Oshodi-Isolo / Oshodi, Isolo
+                </option>
+                <option value="Shomolu">Shomolu / Bariga</option>
+                <option value="Surulere">Surulere</option>
               </select>
 
               {/* GPS Button */}
