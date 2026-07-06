@@ -59,7 +59,6 @@ const ArtisanSignup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log(formData);
     // 🚨 Validation: Stop registration if they haven't pinned a location
     if (!formData?.address || !formData?.coords) {
       toast.error("Please select and pin your business shop location.");
