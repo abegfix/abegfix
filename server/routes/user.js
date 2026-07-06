@@ -41,11 +41,11 @@ router.get("/artisans", async (req, res) => {
       });
     }
 
-    // 3. PRIORITY SORTING STAGE (The "Money" Maker)
     pipeline.push({
       $sort: {
         "artisanProfile.isSponsored": -1, // 1st: Sponsored (True first)
         "artisanProfile.subscriptionTier": -1, // 2nd: Pro (p > f alphabetically, so -1 works)
+        "artisanProfile.isVerified": -1,
         distance: 1, // 3rd: Nearest (if geoNear was used)
         "artisanProfile.rating": -1, // 4th: Best rated
       },
