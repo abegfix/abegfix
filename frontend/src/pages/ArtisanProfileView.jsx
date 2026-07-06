@@ -4,6 +4,7 @@ import API from "../api/axios";
 import toast from "react-hot-toast";
 import useSEO from "../hooks/useSEO";
 import UpgradeModal from "../components/UpgradeModal";
+import avatar from "../assets/avatar.png";
 
 const ArtisanProfileView = () => {
   const { id } = useParams();
@@ -260,7 +261,7 @@ const ArtisanProfileView = () => {
                       "/upload/",
                       "/upload/f_auto,q_auto,w_300,h_300,c_fill,g_face/",
                     )
-                  : "https://via.placeholder.com/300"
+                  : avatar
               }
               alt={profile.businessName}
               className="w-32 h-32 rounded-3xl object-cover border-4 border-white shadow-xl bg-white"
