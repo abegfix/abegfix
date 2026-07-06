@@ -3,6 +3,7 @@ import API from "../api/axios"; // Import your Axios instance
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import useSEO from "../hooks/useSEO";
+import ArtisanLocationPicker from "../components/ArtisanLocationPicker";
 
 const ArtisanSignup = () => {
   const navigate = useNavigate();
@@ -15,6 +16,8 @@ const ArtisanSignup = () => {
     businessName: "",
     category: "",
     whatsapp: "",
+    address: "",
+    coords: null,
   });
   const [showPassword, setShowPassword] = useState(false);
 
@@ -30,8 +33,6 @@ const ArtisanSignup = () => {
     return strength; // 0 to 5
   };
 
-  const passwordStrength = getStrengthScore(formData.password);
-
   // Map strength score to colors and labels
   const strengthScore = getStrengthScore(formData.password);
 
@@ -45,23 +46,37 @@ const ArtisanSignup = () => {
   // We subtract 1 to align score (1-4) with array index (0-3)
   const currentLevel =
     strengthScore > 0 ? strengthConfig[Math.min(strengthScore - 1, 3)] : null;
+
+  // 📍 Handle structured spatial data updates emitted from your picker
+  const handleLocationChange = (locationPayload) => {
+    setFormData((prev) => ({
+      ...prev,
+      address: locationPayload.address,
+      coords: locationPayload.coords,
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    console.log(formData);
+    // 🚨 Validation: Stop registration if they haven't pinned a location
+    if (!formData?.address || !formData?.coords) {
+      toast.error("Please select and pin your business shop location.");
+      return;
+    }
     setLoading(true);
     try {
       // Hits your Node/Express route: POST /api/auth/signup-artisan
       const res = await API.post("/auth/signup-artisan", formData);
 
       // Store the JWT returned by Express
-      // 1. Store token for the "Verify" request (which is protected)
       localStorage.setItem("token", res.data.token);
-      // 2. Store email/role temporarily for the Verify UI
       localStorage.setItem("email_to_verify", formData.email);
       localStorage.setItem("user_role", res.data.role);
 
       toast.success("Account created! Please verify your email.");
-      navigate("/verify-email"); // REDIRECT HERE INSTEAD
+      navigate("/verify-email");
     } catch (err) {
       // Catching the errors sent by your express-validator or custom logic
       toast.error(
@@ -179,6 +194,17 @@ const ArtisanSignup = () => {
               setFormData({ ...formData, whatsapp: e.target.value })
             }
           />
+
+          {/* 📍 INTEGRATED SHOP LOCATION PICKER PANEL */}
+          <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 mt-2">
+            <h3 className="text-xs font-black uppercase mb-3 text-blue-900 tracking-wider">
+              Shop Location Coordinates
+            </h3>
+            <ArtisanLocationPicker
+              onLocationSelect={handleLocationChange}
+              initialAddress={formData.address}
+            />
+          </div>
 
           <button
             type="submit"

@@ -68,10 +68,22 @@ router.post(
 
       await user.save();
 
+      await sendEmail(
+        user.email,
+        "Your Verification Code - Abeg Fix",
+        welcomeTemplate(user.firstName, otp, user.role),
+      );
+
       const token = jwt.sign(
         { id: user._id, role: user.role },
         process.env.JWT_SECRET,
         { expiresIn: "7d" },
+      );
+
+      await sendEmail(
+        user.email,
+        "Your Verification Code - Abeg Fix",
+        welcomeTemplate(user.firstName, otp, user.role),
       );
 
       return res.status(201).json({
@@ -101,8 +113,23 @@ router.post(
     if (!errors.isEmpty())
       return res.status(400).json({ errors: errors.array() });
 
-    const { email, password, firstName, lastName, category, whatsapp } =
-      req.body;
+    const {
+      email,
+      password,
+      firstName,
+      lastName,
+      category,
+      whatsapp,
+      address,
+      businessName,
+      coords,
+    } = req.body;
+
+    if (!address || !coords) {
+      return res
+        .status(400)
+        .json({ msg: "Business shop location data is required." });
+    }
 
     try {
       let user = await User.findOne({ email });
@@ -127,12 +154,25 @@ router.post(
         artisanProfile: {
           category,
           whatsapp,
-          businessName: `${firstName}'s Services`,
+          businessName,
+          address,
+          location: {
+            type: "Point",
+            coordinates: [
+              Number(coords[0]), // Longitude (e.g., 3.3347)
+              Number(coords[1]), // Latitude (e.g., 6.6306)
+            ],
+          },
         },
       });
 
-      user.artisanProfile.location = undefined;
       await user.save();
+
+      await sendEmail(
+        user.email,
+        "Your Verification Code - Abeg Fix",
+        welcomeTemplate(user.firstName, otp, user.role),
+      );
 
       const token = jwt.sign(
         { id: user._id, role: user.role },
