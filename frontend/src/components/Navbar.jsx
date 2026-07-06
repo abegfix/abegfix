@@ -52,15 +52,6 @@ const Navbar = () => {
             {/* Use isAuthenticated instead of local state 'user' */}
             {isAuthenticated ? (
               <>
-                {user?.role === "customer" && (
-                  <Link
-                    to="/favorites"
-                    className="text-gray-600 hover:text-blue-700 text-sm md:text-base font-medium hidden sm:block"
-                  >
-                    Favorites
-                  </Link>
-                )}
-
                 <Link
                   to={getProfileRoute()}
                   className="text-gray-600 hover:text-blue-700 text-sm md:text-base font-medium"

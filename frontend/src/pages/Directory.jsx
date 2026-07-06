@@ -4,13 +4,15 @@ import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import BackToTopButton from "../components/BackToTopButton";
 import useSEO from "../hooks/useSEO";
+import { useAuth } from "../context/AuthContext";
 
 const Directory = () => {
   const [artisans, setArtisans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
-  const [user, setUser] = useState(null); // Added user profile state
+
+  const { user, loading: authLoading } = useAuth();
 
   // --- FILTER STATES ---
   const [searchTerm, setSearchTerm] = useState("");
@@ -28,44 +30,23 @@ const Directory = () => {
 
   // --- 1. INITIAL LOAD: USER PROFILE & ARTISANS ---
   useEffect(() => {
-    const initData = async () => {
-      setLoading(true);
-      await fetchUserProfile(); // Get user location first
-      await fetchArtisans(); // Then fetch artisans (will use user location if available)
-    };
-    initData();
-  }, []);
+    if (user) {
+      setFavorites(user.favorites || []);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    // Only fetch artisans once the global Auth Context has finished resolving
+    if (!authLoading) {
+      fetchArtisans();
+    }
+  }, [authLoading, userLocation, user]); // Refetch if live GPS or user profile loads
 
   useSEO({
     title: "Artisan Directory",
     description: `Search for artisans in your area. Verified on Abeg Fix.`,
     ogType: "directory",
   });
-
-  // --- 2. RE-FETCH WHEN LOCATION CHANGES ---
-  useEffect(() => {
-    fetchArtisans();
-  }, [userLocation, user]); // Refetch if live GPS or user profile loads
-
-  const fetchUserProfile = async () => {
-    // 1. Check if we even have a token locally
-    const token = localStorage.getItem("token");
-
-    // 2. If no token exists, silently exit the function. Do not call the API.
-    if (!token) {
-      console.log("No token found, skipping profile fetch for unlogged user.");
-      return;
-    }
-
-    try {
-      // 3. We have a token, so it's safe to ask the server for data
-      const res = await API.get("/auth/me");
-      setUser(res.data);
-      setFavorites(res.data.favorites || []);
-    } catch (err) {
-      console.log("Not logged in or session expired");
-    }
-  };
 
   const fetchArtisans = async () => {
     try {

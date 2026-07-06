@@ -245,11 +245,9 @@ const CustomerProfile = () => {
         )}
 
         {activeTab === "favorites" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {loading ? (
-              <p className="text-center col-span-2 py-10">
-                Loading favorites...
-              </p>
+              <p className="text-center py-10">Loading favorites...</p>
             ) : favorites.length > 0 ? (
               favorites.map((artisan) => (
                 <div

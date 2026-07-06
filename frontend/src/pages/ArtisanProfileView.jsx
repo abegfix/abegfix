@@ -185,6 +185,30 @@ const ArtisanProfileView = () => {
     }
   };
 
+  const handleShareProfile = async () => {
+    const shareData = {
+      title: profile.businessName || "Check out this Artisan!",
+      text: `Take a look at ${profile.businessName || "this professional"} on our platform!`,
+      url: window.location.href, // Captures the exact profile URL dynamically
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log("Error sharing:", err);
+      }
+    } else {
+      // Fallback if Web Share API is missing (e.g., standard desktop browsers)
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success("Profile link copied to clipboard!");
+      } catch (err) {
+        toast.error("Could not copy link automatically.");
+      }
+    }
+  };
+
   if (loading)
     return (
       <div className="p-20 text-center animate-pulse font-bold text-gray-400 uppercase tracking-widest">
@@ -206,6 +230,26 @@ const ArtisanProfileView = () => {
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
         {/* --- HEADER SECTION --- */}
         <div className="h-64 bg-[#1E3A8A] relative">
+          <button
+            onClick={handleShareProfile}
+            className="absolute top-6 right-6 bg-white/10 backdrop-blur-md border border-white/20 text-white p-3 rounded-2xl hover:bg-white/20 active:scale-95 transition flex items-center gap-2 text-xs font-black uppercase tracking-wider shadow-lg group z-10"
+            title="Share Profile"
+          >
+            <svg
+              className="w-5 h-5 text-white group-hover:rotate-12 transition-transform"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"
+              />
+            </svg>
+            <span className="hidden sm:inline">Share</span>
+          </button>
           <div className="absolute -bottom-16 left-8">
             <img
               // 1. Apply the optimization helper with a smaller width (300px is plenty for a 128px UI)
@@ -353,7 +397,7 @@ const ArtisanProfileView = () => {
                     className={`flex items-center gap-2 font-bold text-sm ${profile.isVerified ? "text-green-600" : "text-gray-400 opacity-50"}`}
                   >
                     {profile.isVerified
-                      ? "✅ NIN Identity Verified"
+                      ? "✅ BVN Identity Verified"
                       : "⚪ ID Not Verified"}
                   </div>
                   {profile.subscriptionTier === "pro" && (
