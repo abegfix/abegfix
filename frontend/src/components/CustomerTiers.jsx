@@ -29,7 +29,6 @@ const customerTiers = [
     features: [
       "Everything in Basic",
       "Unlimited Contact Reveals",
-      "Ad-free Experience",
       "Priority Customer Support",
     ],
     cta: "Go Premium",
