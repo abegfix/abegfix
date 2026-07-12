@@ -23,7 +23,7 @@ const tiers = [
     features: [
       "Everything in Basic",
       "BVN Identity Badge",
-      "Official 'Verified' Seal",
+      "Official 'BVN Verified' Seal",
       "Higher Trust Score",
       "Trust-Based Search Filter",
     ],
@@ -37,7 +37,6 @@ const tiers = [
     description: "Dominate your local area.",
     icon: <Zap className="text-blue-600" />,
     features: [
-      "Everything in Verified",
       "Top-of-Search Ranking",
       "Featured Profile Label",
       "Up 15 portfolio upload slots",

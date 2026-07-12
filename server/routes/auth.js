@@ -23,6 +23,21 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+const BANNED_USERNAMES = [
+  "login",
+  "signup",
+  "directory",
+  "admin-dashboard",
+  "artisan-dashboard",
+  "support",
+  "help-center",
+  "about",
+  "contact",
+  "privacy",
+  "terms",
+  "faq",
+];
+
 // @route   POST api/auth/signup-customer
 router.post(
   "/signup-customer",
@@ -123,6 +138,7 @@ router.post(
       address,
       businessName,
       coords,
+      username,
     } = req.body;
 
     if (!address || !coords) {
@@ -146,6 +162,7 @@ router.post(
         password: hashedPassword,
         role: "artisan",
         firstName,
+        username,
         lastName,
         emailVerificationOTP: otp,
         otpExpires: otpExpires,
@@ -495,6 +512,39 @@ router.put("/update-customer", protect, async (req, res) => {
   } catch (err) {
     console.error("Update Profile Error:", err.message);
     res.status(500).json({ msg: "Server Error" });
+  }
+});
+
+// API Route: GET /api/auth/check-username?username=tunde
+router.get("/check-username", async (req, res) => {
+  const { username } = req.query;
+
+  if (!username)
+    return res
+      .status(400)
+      .json({ msg: "Username query parameter is required." });
+
+  if (BANNED_USERNAMES.includes(username.toLowerCase())) {
+    return res
+      .status(200)
+      .json({ available: false, msg: "Reserved system keyword" });
+  }
+
+  try {
+    const existingUser = await User.findOne({
+      username: username.toLowerCase(),
+    });
+
+    if (existingUser) {
+      return res.json({
+        available: false,
+        msg: "❌ This username is already taken.",
+      });
+    }
+
+    return res.json({ available: true, msg: "✅ Username is available!" });
+  } catch (err) {
+    res.status(500).send("Server error");
   }
 });
 

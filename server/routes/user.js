@@ -69,12 +69,22 @@ router.get("/artisans", async (req, res) => {
   }
 });
 
-// @route   GET api/users/artisan/:id
-// @desc    Get a single artisan's public profile by ID
-router.get("/artisan/:id", async (req, res) => {
+router.get("/artisan/:identifier", async (req, res) => {
   try {
-    // Find the user by the ID passed in the URL
-    const artisan = await User.findById(req.params.id).select("-password");
+    const { identifier } = req.params;
+    let query = {};
+
+    // Check if the parameter matches a 24-character hexadecimal string (MongoDB ObjectId)
+    if (identifier.match(/^[0-9a-fA-F]{24}$/)) {
+      query = { _id: identifier };
+    } else {
+      // Otherwise, look up by the lowercased username handle
+      query = { username: identifier.toLowerCase() };
+    }
+
+    const artisan = await User.findOne(query).select(
+      "-password -emailVerificationOTP -otpExpires -artisanProfile.nin",
+    );
 
     // Safety check: Ensure the user exists and is actually an artisan
     if (!artisan || artisan.role !== "artisan") {
@@ -83,14 +93,33 @@ router.get("/artisan/:id", async (req, res) => {
 
     res.json(artisan);
   } catch (err) {
-    // Check if the error is a malformed MongoDB ObjectId
-    if (err.kind === "ObjectId") {
-      return res.status(404).json({ msg: "Invalid Artisan ID" });
-    }
     console.error(err.message);
     res.status(500).send("Server Error");
   }
 });
+
+// // @route   GET api/users/artisan/:id
+// // @desc    Get a single artisan's public profile by ID
+// router.get("/artisan/:id", async (req, res) => {
+//   try {
+//     // Find the user by the ID passed in the URL
+//     const artisan = await User.findById(req.params.id).select("-password");
+
+//     // Safety check: Ensure the user exists and is actually an artisan
+//     if (!artisan || artisan.role !== "artisan") {
+//       return res.status(404).json({ msg: "Artisan not found" });
+//     }
+
+//     res.json(artisan);
+//   } catch (err) {
+//     // Check if the error is a malformed MongoDB ObjectId
+//     if (err.kind === "ObjectId") {
+//       return res.status(404).json({ msg: "Invalid Artisan ID" });
+//     }
+//     console.error(err.message);
+//     res.status(500).send("Server Error");
+//   }
+// });
 
 // GET /api/users/favorites
 router.get("/favorites", protect, async (req, res) => {

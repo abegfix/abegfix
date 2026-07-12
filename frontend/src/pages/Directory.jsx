@@ -186,7 +186,7 @@ const Directory = () => {
             htmlFor="verifiedFilter"
             className="text-xs font-black uppercase tracking-widest text-gray-700 cursor-pointer select-none"
           >
-            Verified Only ✅
+            BVN Verified Only ✅
           </label>
         </div>
       </div>
@@ -291,7 +291,7 @@ const Directory = () => {
                       {isVerified && (
                         <span
                           className="text-green-500"
-                          title="Verified Professional"
+                          title="BVN Verified Professional"
                         >
                           <svg
                             className="w-4 h-4"
@@ -327,7 +327,7 @@ const Directory = () => {
                     {/* Action Buttons */}
                     <div className="mt-4 flex gap-2">
                       <Link
-                        to={`/artisan/${artisan._id}`}
+                        to={`/artisan/${artisan.username}`}
                         className={`flex-1 text-center py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition shadow-sm ${
                           isPro
                             ? "bg-blue-600 text-white hover:bg-blue-700"

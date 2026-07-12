@@ -15,6 +15,17 @@ const UserSchema = new Schema(
     lastName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    username: {
+      type: String,
+      unique: true,
+      sparse: true, // Crucial: allows customers who don't have a username yet to avoid null duplicate errors
+      trim: true,
+      lowercase: true,
+      match: [
+        /^[a-z0-9_]+$/,
+        "Usernames can only contain letters, numbers, and underscores.",
+      ],
+    },
     role: {
       type: String,
       enum: ["customer", "artisan", "admin"],

@@ -6,7 +6,6 @@ export const welcomeTemplate = (firstName, otp, role) => `
 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 24px; overflow: hidden; background-color: #ffffff;">
   <div style="background-color: #1E3A8A; padding: 40px 20px; text-align: center;">
     <img src="${LOGO_URL}" alt="Abeg Fix" style="width: 150px; height: auto; margin-bottom: 10px;">
-    <h1 style="color: white; margin: 0; font-size: 20px; letter-spacing: 4px; font-weight: 900; text-transform: uppercase;">Reliable Artisans</h1>
   </div>
 
   <div style="padding: 40px 30px; color: #334155; line-height: 1.8;">
@@ -50,9 +49,7 @@ export const resetTemplate = (resetUrl) => `
     </p>
   </div>
 
-  <div style="background-color: #f8fafc; padding: 20px; text-align: center; font-size: 11px; color: #cbd5e1;">
-    Abeg Fix &bull; Reliable Artisans &bull; Lagos, Nigeria
-  </div>
+
 </div>
 `;
 

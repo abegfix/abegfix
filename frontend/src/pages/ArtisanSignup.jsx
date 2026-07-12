@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import API from "../api/axios"; // Import your Axios instance
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,7 @@ const ArtisanSignup = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    username: "",
     firstName: "",
     lastName: "",
     businessName: "",
@@ -21,19 +22,74 @@ const ArtisanSignup = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
 
+  // 🎯 New state management for username verification metrics
+  const [usernameStatus, setUsernameStatus] = useState({
+    checking: false,
+    available: null,
+    message: "",
+  });
+
   useSEO({ title: "Artisan Signup" });
+
+  // 🎯 Debounce API Engine to check username status dynamically
+  useEffect(() => {
+    if (!formData.username) {
+      setUsernameStatus({ checking: false, available: null, message: "" });
+      return;
+    }
+
+    // Don't hit API if username is too short to be viable
+    if (formData.username.length < 3) {
+      setUsernameStatus({
+        checking: false,
+        available: false,
+        message: "⚠️ Username must be at least 3 characters.",
+      });
+      return;
+    }
+
+    setUsernameStatus((prev) => ({ ...prev, checking: true, message: "" }));
+
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const res = await API.get(
+          `/auth/check-username?username=${formData.username}`,
+        );
+        if (res.data.available) {
+          setUsernameStatus({
+            checking: false,
+            available: true,
+            message: "✅ This username is available!",
+          });
+        } else {
+          setUsernameStatus({
+            checking: false,
+            available: false,
+            message: "❌ This username is already taken.",
+          });
+        }
+      } catch (err) {
+        setUsernameStatus({
+          checking: false,
+          available: null,
+          message: "Could not verify username availability.",
+        });
+      }
+    }, 500); // ⏱️ Wait 500ms after user finishes typing
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [formData.username]);
 
   const getStrengthScore = (password) => {
     let strength = 0;
-    if (password.length >= 6) strength++; // Basic requirement
-    if (password.length >= 10) strength++; // Bonus length
-    if (/[0-9]/.test(password)) strength++; // Has numbers
-    if (/[A-Z]/.test(password)) strength++; // Has Uppercase
-    if (/[^A-Za-z0-9]/.test(password)) strength++; // Has Special Char
-    return strength; // 0 to 5
+    if (password.length >= 6) strength++;
+    if (password.length >= 10) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    return strength;
   };
 
-  // Map strength score to colors and labels
   const strengthScore = getStrengthScore(formData.password);
 
   const strengthConfig = [
@@ -43,11 +99,9 @@ const ArtisanSignup = () => {
     { label: "Strong", color: "bg-green-500", width: "100%" },
   ];
 
-  // We subtract 1 to align score (1-4) with array index (0-3)
   const currentLevel =
     strengthScore > 0 ? strengthConfig[Math.min(strengthScore - 1, 3)] : null;
 
-  // 📍 Handle structured spatial data updates emitted from your picker
   const handleLocationChange = (locationPayload) => {
     setFormData((prev) => ({
       ...prev,
@@ -59,17 +113,22 @@ const ArtisanSignup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 🚨 Validation: Stop registration if they haven't pinned a location
+    // 🚨 Guard: Verify that username is checked and confirmed available
+    if (usernameStatus.available === false) {
+      toast.error("Please choose an available username before submitting.");
+      return;
+    }
+
+    // 🚨 Guard: Stop registration if they haven't pinned a location
     if (!formData?.address || !formData?.coords) {
       toast.error("Please select and pin your business shop location.");
       return;
     }
+
     setLoading(true);
     try {
-      // Hits your Node/Express route: POST /api/auth/signup-artisan
       const res = await API.post("/auth/signup-artisan", formData);
 
-      // Store the JWT returned by Express
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("email_to_verify", formData.email);
       localStorage.setItem("user_role", res.data.role);
@@ -77,7 +136,6 @@ const ArtisanSignup = () => {
       toast.success("Account created! Please verify your email.");
       navigate("/verify-email");
     } catch (err) {
-      // Catching the errors sent by your express-validator or custom logic
       toast.error(
         err.response?.data?.msg || "Signup failed. Please try again.",
       );
@@ -106,6 +164,56 @@ const ArtisanSignup = () => {
               setFormData({ ...formData, email: e.target.value })
             }
           />
+
+          {/* 🎯 USERNAME MODULE BLOCK */}
+          <div>
+            <label className="block text-xs font-bold uppercase text-gray-500 mb-1">
+              Choose Username
+            </label>
+            <div className="flex rounded-lg border border-gray-300 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
+              <span className="bg-gray-100 text-gray-500 px-3 py-3 text-sm flex items-center border-r border-gray-200 select-none font-medium">
+                abegfix.com/
+              </span>
+              <input
+                type="text"
+                placeholder="username"
+                value={formData.username}
+                required
+                className="w-full p-3 outline-none text-sm lowercase"
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    username: e.target.value
+                      .toLowerCase()
+                      .replace(/[^a-z0-9_]/g, ""),
+                  })
+                }
+              />
+            </div>
+
+            {/* 🎯 Real-Time Status Notification Messages */}
+            {formData.username && (
+              <div className="mt-1 text-xs font-medium pl-1">
+                {usernameStatus.checking && (
+                  <span className="text-gray-400 animate-pulse">
+                    Checking availability...
+                  </span>
+                )}
+                {!usernameStatus.checking && usernameStatus.message && (
+                  <span
+                    className={
+                      usernameStatus.available
+                        ? "text-green-600"
+                        : "text-red-500"
+                    }
+                  >
+                    {usernameStatus.message}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -166,7 +274,6 @@ const ArtisanSignup = () => {
               }
             />
           </div>
-
           <input
             type="text"
             placeholder="Business Name"
@@ -194,7 +301,6 @@ const ArtisanSignup = () => {
             }
           />
 
-          {/* 📍 INTEGRATED SHOP LOCATION PICKER PANEL */}
           <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 mt-2">
             <h3 className="text-xs font-black uppercase mb-3 text-blue-900 tracking-wider">
               Shop Location Coordinates
@@ -207,7 +313,11 @@ const ArtisanSignup = () => {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={
+              loading ||
+              usernameStatus.checking ||
+              usernameStatus.available === false
+            }
             className="w-full bg-[#1E3A8A] text-white p-4 rounded-lg font-bold hover:bg-blue-900 transition mt-4 disabled:bg-gray-400"
           >
             {loading ? "Creating Account..." : "Create My Artisan Profile"}

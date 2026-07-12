@@ -101,7 +101,6 @@ function App() {
               path="/update-password/:token"
               element={<UpdatePassword />}
             />
-            <Route path="/artisan/:id" element={<ArtisanProfileView />} />
             /**Inner Pages*/
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
@@ -129,6 +128,7 @@ function App() {
             <Route path="/refund-policy" element={<RefundPolicy />} />
             <Route path="/safety" element={<Safety />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/artisan/:username" element={<ArtisanProfileView />} />
           </Routes>
         </main>
 

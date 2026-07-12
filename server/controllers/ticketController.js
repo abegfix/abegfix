@@ -118,7 +118,7 @@ export const adminReply = async (req, res) => {
         targetUserId: ticket.user._id,
         targetUserEmail: ticket.user.email,
       });
-      console.log("Admin Log created successfully");
+      //console.log("Admin Log created successfully");
     } catch (logErr) {
       console.error("Failed to create Admin Log:", logErr.message);
       // We don't return res.status(500) here so the user still gets their email

@@ -7,11 +7,12 @@ import UpgradeModal from "../components/UpgradeModal";
 import avatar from "../assets/avatar.png";
 
 const ArtisanProfileView = () => {
-  const { id } = useParams();
+  const { username } = useParams();
   const [artisan, setArtisan] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [id, setId] = useState(null);
 
   // Review Form State
   const [rating, setRating] = useState(5);
@@ -27,7 +28,7 @@ const ArtisanProfileView = () => {
 
   useSEO({
     title: artisan
-      ? `${artisan?.firstName} - ${artisan?.artisanProfile?.category}`
+      ? `${artisan?.artisanProfile?.businessName} - ${artisan?.artisanProfile?.category}`
       : "Loading Artisan...",
     description: `Hire ${artisan?.firstName}, a professional ${artisan?.artisanProfile?.category || "Artisan"}. Verified on Abeg Fix.`,
     ogImage: artisan?.profileImage || "/default-preview.png",
@@ -38,11 +39,16 @@ const ArtisanProfileView = () => {
     const fetchData = async () => {
       try {
         // 1. Fetch Artisan Data (Public)
-        const artisanRes = await API.get(`/users/artisan/${id}`);
+        const identifier = username;
+        const artisanRes = await API.get(`/users/artisan/${identifier}`);
+
         setArtisan(artisanRes.data);
+        setId(artisanRes.data._id);
 
         // 2. Fetch Reviews (Public)
-        const reviewsRes = await API.get(`/reviews/artisan/${id}`);
+        const reviewsRes = await API.get(
+          `/reviews/artisan/${artisanRes.data._id}`,
+        );
         setReviews(reviewsRes.data);
 
         // 3. ONLY get current user IF they are logged in
@@ -52,7 +58,7 @@ const ArtisanProfileView = () => {
             const userRes = await API.get("/auth/me");
             setCurrentUser(userRes.data);
           } catch (authErr) {
-            console.log("Token invalid or expired, staying as guest.");
+            // console.log("Token invalid or expired, staying as guest.");
             // Don't throw here, just let them be a guest
           }
         }
@@ -64,7 +70,7 @@ const ArtisanProfileView = () => {
       }
     };
     fetchData();
-  }, [id]);
+  }, [username]);
 
   const handleDeleteReview = async (reviewId) => {
     if (!window.confirm("Are you sure you want to delete this review?")) return;
@@ -399,7 +405,7 @@ const ArtisanProfileView = () => {
                   >
                     {profile.isVerified
                       ? "✅ BVN Identity Verified"
-                      : "⚪ ID Not Verified"}
+                      : "⚪ BVN Not Verified"}
                   </div>
                   {profile.subscriptionTier === "pro" && (
                     <div className="flex items-center gap-2 text-blue-600 font-bold text-sm">

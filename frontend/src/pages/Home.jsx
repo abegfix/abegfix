@@ -34,8 +34,8 @@ export default function Home() {
           transition={{ delay: 0.3, duration: 0.8 }}
           className="max-w-xl mt-4 text-gray-200 relative z-10"
         >
-          Browse skilled artisans, view verified profiles, and book the right
-          person instantly.
+          Find and compare Lagos artisans. View their work, location, and
+          customer reviews before contacting them
         </motion.p>
       </section>
 

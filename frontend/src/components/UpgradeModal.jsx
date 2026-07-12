@@ -163,7 +163,6 @@ const UpgradeModal = ({
                 onClick={() => {
                   handleFlutterPayment({
                     callback: (response) => {
-                      console.log(response);
                       if (response.status === "completed") {
                         onSuccess(response, bvn); // Pass response to parent
                       } else {
