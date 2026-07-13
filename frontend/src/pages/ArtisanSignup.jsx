@@ -172,7 +172,7 @@ const ArtisanSignup = () => {
             </label>
             <div className="flex rounded-lg border border-gray-300 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
               <span className="bg-gray-100 text-gray-500 px-3 py-3 text-sm flex items-center border-r border-gray-200 select-none font-medium">
-                abegfix.com/
+                abegfix.com/artisan/
               </span>
               <input
                 type="text"
