@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { getMe, updateProfile } from "../controllers/authController.js";
 import { protect, authorize } from "../middleware/auth.js";
-import { revealArtisanContact, shareArtisanImage } from "../controllers/userController.js";
+import { revealArtisanContact } from "../controllers/userController.js";
 
 const router = express.Router();
 
@@ -166,7 +166,5 @@ router.post("/favorite/:id", protect, async (req, res) => {
 // POST /api/users/reveal/:artisanId
 router.post("/reveal-artisan/:artisanId", protect, revealArtisanContact);
 
-// GET /share-image/:artisanId
-router.get("/share-image/:artisanId", shareArtisanImage);
 
 export default router;

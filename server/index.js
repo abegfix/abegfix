@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import mongoose from "mongoose";
 import rateLimit from "express-rate-limit";
+import User from "./models/User.js";
 
 //routes
 import authRoutes from "./routes/auth.js";
@@ -60,6 +61,72 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/webhooks", webhookRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/tickets", ticketRoutes);
+
+//Artisan HTML Route
+app.get("/artisan/:username", async (req, res) => {
+  try {
+    const { username } = req.params;
+
+
+    const artisan = await User.findOne({
+      username: username.toLowerCase(),
+      role: "artisan",
+    }).select(
+      "-password -emailVerificationOTP -otpExpires -artisanProfile.nin"
+    );
+
+    if (!artisan) {
+      return res.status(404).send("Artisan not found");
+    }
+
+    const profile = artisan.artisanProfile || {};
+
+    const title = `${profile.businessName || artisan.username} | Abeg Fix`;
+
+    const description =
+      `${profile.category || "Professional artisan"} in ${profile.address || "Lagos"}. View portfolio, reviews and contact on Abeg Fix.`;
+
+    const image =
+      profile.profilePic ||
+      "https://abegfix.com/assets/logo-eaDYfWcH.png";
+
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>${title}</title>
+
+<meta name="description" content="${description}">
+
+<meta property="og:title" content="${title}">
+<meta property="og:description" content="${description}">
+<meta property="og:image" content="${image}">
+<meta property="og:type" content="profile">
+<meta property="og:url" content="https://abegfix.com/artisan/${username}">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${title}">
+<meta name="twitter:description" content="${description}">
+<meta name="twitter:image" content="${image}">
+
+</head>
+
+<body>
+Loading Abeg Fix...
+</body>
+
+</html>
+`;
+
+    res.send(html);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Server Error");
+  }
+});
 
 // Health check (usually left without a limiter so monitoring tools don't get blocked)
 app.get("/health", (req, res) => {
