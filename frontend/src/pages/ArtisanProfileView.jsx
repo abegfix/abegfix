@@ -47,8 +47,9 @@ const ArtisanProfileView = () => {
         setReviews(reviewsRes.data);
 
         // 3. Fetch Profile Image (Public)
-        const data = await API.get(`users/share-image/${data._id}`);
-        setOgImage(data?.data?.ogImage);
+        const data = await API.get(`users/share-image/${artisanRes.data._id}`);
+        setOgImage(data?.data);
+
 
         // 4. ONLY get current user IF they are logged in
         const token = localStorage.getItem("token");
@@ -70,6 +71,7 @@ const ArtisanProfileView = () => {
     };
     fetchData();
   }, [username]);
+
 
   const handleDeleteReview = async (reviewId) => {
     if (!window.confirm("Are you sure you want to delete this review?")) return;
@@ -199,6 +201,7 @@ const ArtisanProfileView = () => {
       url: window.location.href, // Captures the exact profile URL dynamically
     };
 
+    console.log(shareData)
 
     if (navigator.share) {
       try {
