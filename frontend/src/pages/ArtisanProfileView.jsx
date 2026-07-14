@@ -32,7 +32,7 @@ const ArtisanProfileView = () => {
       ? `${artisan?.artisanProfile?.businessName} - ${artisan?.artisanProfile?.category}`
       : "Loading Artisan...",
     description:
-      `${artisan.firstName} provides ${artisan?.artisanProfile?.category} services in ${location}. View portfolio, reviews and contact details on Abeg Fix.`,
+      `${artisan?.firstName} provides ${artisan?.artisanProfile?.category} services in ${location}. View portfolio, reviews and contact details on Abeg Fix.`,
     ogImage: artisan?.artisanProfile?.profilePic || "/default-preview.png",
     ogType: "profile",
   });

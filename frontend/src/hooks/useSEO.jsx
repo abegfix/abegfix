@@ -25,6 +25,7 @@ const useSEO = ({ title, description, ogImage, ogType = "website" }) => {
     setMetaTag("property", "og:description", description);
     setMetaTag("property", "og:url", url);
     setMetaTag("property", "og:type", ogType);
+    setMetaTag("property", "og:site_name", "Abeg Fix");
 
     if (ogImage) {
       setMetaTag("property", "og:image", ogImage);
