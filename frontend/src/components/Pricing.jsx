@@ -10,7 +10,7 @@ const tiers = [
     price: "Free",
     description: "Start listing your services.",
     features: ["Public Profile", "List 1 Category", "Standard Search Results"],
-    notIncluded: ["Verified Badge", "BVN Validation"],
+    notIncluded: ["BVN Verified Badge", "BVN Validation"],
     cta: "Get Started",
     style: "bg-white border-gray-200",
   },

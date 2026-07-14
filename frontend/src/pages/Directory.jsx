@@ -44,7 +44,7 @@ const Directory = () => {
 
   useSEO({
     title: "Artisan Directory",
-    description: `Search for artisans in your area. Verified on Abeg Fix.`,
+    description: `Search for artisans in your area. Listed on Abeg Fix.`,
     ogType: "directory",
   });
 

@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import sharp from "sharp";
 
 export const revealArtisanContact = async (req, res) => {
   try {
@@ -63,4 +64,48 @@ export const revealArtisanContact = async (req, res) => {
   } catch (error) {
     res.status(500).json({ msg: "Server error" });
   }
+};
+
+
+export const shareArtisanImage = async (req, res) => {
+  const artisan = await User.findById(req.params.artisanId);
+
+   const svg = `
+   <svg width="1200" height="630">
+     <rect width="100%" height="100%" fill="#1E3A8A"/>
+
+     <text x="60" y="150"
+       font-size="70"
+       fill="white">
+       ${artisan.artisanProfile.businessName}
+     </text>
+
+     <text x="60" y="260"
+       font-size="45"
+       fill="white">
+       ${artisan.artisanProfile.category}
+     </text>
+
+     <text x="60" y="360"
+       font-size="40"
+       fill="white">
+       📍 ${artisan.artisanProfile.location}
+     </text>
+
+     <text x="60" y="500"
+       font-size="40"
+       fill="white">
+       AbegFix.com
+     </text>
+   </svg>
+   `;
+
+
+   const image = await sharp(Buffer.from(svg))
+     .png()
+     .toBuffer();
+
+
+   res.set("Content-Type","image/png");
+   res.send(image)
 };

@@ -61,7 +61,7 @@ const Contact = () => {
             <div>
               <h3 className="text-2xl font-bold mb-6">Contact Information</h3>
               <p className="text-blue-200 mb-10 leading-relaxed">
-                Whether you're an artisan trying to get verified or a customer
+                Whether you're an artisan trying to get BVN verified or a customer
                 looking for reliable help, we're here for you.
               </p>
 

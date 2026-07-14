@@ -35,10 +35,3 @@ const useSEO = ({ title, description, ogImage, ogType = "website" }) => {
 };
 
 export default useSEO;
-
-// useSEO({
-//     title: artisan ? `${artisan.firstName} - ${artisan.specialty}` : "Loading Artisan...",
-//     description: `Hire ${artisan?.firstName}, a professional ${artisan?.specialty} in ${artisan?.location}. Verified on Abeg Fix.`,
-//     ogImage: artisan?.profileImage || "/default-preview.png",
-//     ogType: "profile"
-//   });

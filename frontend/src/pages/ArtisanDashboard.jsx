@@ -376,7 +376,7 @@ const ArtisanDashboard = () => {
               onClick={() => setModalConfig({ isOpen: true, type: "verified" })}
               className="bg-green-500 text-white px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-widest shadow-md hover:bg-green-600 transition"
             >
-              Get Verified
+              Get BVN Verified
             </button>
           )}
           <a
@@ -699,7 +699,7 @@ const ArtisanDashboard = () => {
               <div className="text-center md:text-right">
                 <p className="text-3xl font-black">{reviews.length}</p>
                 <p className="text-xs font-bold uppercase opacity-70">
-                  Verified Reviews
+                   Reviews
                 </p>
               </div>
             </div>

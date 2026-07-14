@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import useSEO from "../hooks/useSEO";
 import UpgradeModal from "../components/UpgradeModal";
 import avatar from "../assets/avatar.png";
+import ArtisanSchema from "../components/ArtisanSchema";
 
 const ArtisanProfileView = () => {
   const { username } = useParams();
@@ -13,6 +14,7 @@ const ArtisanProfileView = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [id, setId] = useState(null);
+  const [ogImage, setOgImage] = useState(null);
 
   // Review Form State
   const [rating, setRating] = useState(5);
@@ -26,14 +28,7 @@ const ArtisanProfileView = () => {
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  useSEO({
-    title: artisan
-      ? `${artisan?.artisanProfile?.businessName} - ${artisan?.artisanProfile?.category}`
-      : "Loading Artisan...",
-    description: `Hire ${artisan?.firstName}, a professional ${artisan?.artisanProfile?.category || "Artisan"}. Verified on Abeg Fix.`,
-    ogImage: artisan?.profileImage || "/default-preview.png",
-    ogType: "profile",
-  });
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,7 +46,11 @@ const ArtisanProfileView = () => {
         );
         setReviews(reviewsRes.data);
 
-        // 3. ONLY get current user IF they are logged in
+        // 3. Fetch Profile Image (Public)
+        const data = await API.get(`users/share-image/${data._id}`);
+        setOgImage(data?.data?.ogImage);
+
+        // 4. ONLY get current user IF they are logged in
         const token = localStorage.getItem("token");
         if (token) {
           try {
@@ -193,11 +192,13 @@ const ArtisanProfileView = () => {
   };
 
   const handleShareProfile = async () => {
+
     const shareData = {
       title: profile.businessName || "Check out this Artisan!",
       text: `Take a look at ${profile.businessName || "this professional"} on our platform!`,
       url: window.location.href, // Captures the exact profile URL dynamically
     };
+
 
     if (navigator.share) {
       try {
@@ -215,6 +216,16 @@ const ArtisanProfileView = () => {
       }
     }
   };
+
+  useSEO({
+    title: artisan
+      ? `${artisan?.artisanProfile?.businessName} - ${artisan?.artisanProfile?.category}`
+      : "Loading Artisan...",
+    description:
+      `${artisan?.firstName} provides ${artisan?.artisanProfile?.category} services in ${location}. View portfolio, reviews and contact details on Abeg Fix.`,
+    ogImage: artisan?.artisanProfile?.profilePic || ogImage,
+    ogType: "profile",
+  });
 
   if (loading)
     return (
@@ -583,6 +594,7 @@ const ArtisanProfileView = () => {
         userId={currentUser?._id}
         onSuccess={handlePaymentSuccess}
       />
+      <ArtisanSchema artisan={artisan} />
     </div>
   );
 };
