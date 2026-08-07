@@ -81,7 +81,7 @@ app.get("/artisan/:username", async (req, res) => {
 
     const profile = artisan.artisanProfile || {};
 
-    const title = `${profile.businessName || artisan.username} | Abeg Fix`;
+    const title = `${profile.businessName || artisan.username} - ${profile.category} | Abeg Fix`;
 
     const description =
       `${profile.category || "Professional artisan"} in ${profile.address || "Lagos"}. View portfolio, reviews and contact on Abeg Fix.`;
